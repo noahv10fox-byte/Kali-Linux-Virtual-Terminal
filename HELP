@@ -1,0 +1,119 @@
+╔════════════════════════════════ ════════════════════════════════╗
+║ KALI LINUX VIRTUAL MACHINE - HELP ║
+╚═══════════════════════════════════════════════════════════════╝
+
+SYSTEM COMMANDS:
+
+whoami - Displays the current user
+
+pwd - Displays the current working directory
+
+cd [dir] - Changes the directory
+
+ls [path] - Lists files and directories
+
+clear - Clears the screen
+
+exit - Exits the system
+
+NETWORK COMMANDS:
+
+ifconfig - Displays network interface information
+
+ip - Advanced network configuration utility
+
+ping [host] - Sends ICMP packets
+
+traceroute [host] - Displays the route to a host
+
+netstat - Displays network connections and open ports
+
+ss - Socket statistics utility
+
+route - Displays the routing table
+
+whois [domain] - WHOIS information
+
+dig [domain] - DNS lookup tool
+
+nslookup [domain] - Name resolution query
+
+SECURITY TOOLS:
+
+nmap - Port scanning and service discovery
+
+Metasploit - Penetration analysis framework
+
+sqlmap - Automated SQL injection
+
+Burp Suite - Web scanner
+
+Hydra - Brute-force attack
+
+hashcat - GPU password cracking
+
+john - Hash cracking
+
+aircrack-ng - WiFi cracking
+
+Wireshark - Protocol analyzer
+
+nikto - Web vulnerability scanner
+
+gobuster - Directory enumeration
+
+wpscan - WordPress scanner
+
+lynis - Security auditing
+
+FILE COMMANDS:
+
+cat [file] - Displays file contents
+
+echo [text] - Prints text
+
+mkdir [dir] - Creates directory
+
+touch [file] - Creates empty file
+
+rm [file] - Deletes file
+
+cp [src] [dst] - Copies file
+
+mv [src] [dst] - Moves/renames file
+
+grep [pattern] - Searches for pattern in files
+
+find [path] - Searches for files
+
+SYSTEM INFORMATION:
+
+uname - Kernel information
+
+hostname - Hostname
+
+date - Current date and time
+
+uptime - Uptime
+
+df - Disk space
+
+free - Available memory
+
+ps - Running processes
+
+top - Process monitor
+
+UTILITIES:
+
+tools - Lists all available tools
+
+history - Displays command history
+
+help - Displays this help
+
+scan [type] - Performs a security scan
+
+exploit [name] - Executes an exploit
+
+payload [type] - Generates a payload
