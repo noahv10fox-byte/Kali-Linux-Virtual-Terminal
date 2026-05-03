@@ -1,15 +1,13 @@
 # Kali-Linux-Virtual-Terminal
  KALI LINUX VIRTUAL MACHINE SIMULATOR                                                                                                      
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                  KALI LINUX VIRTUAL MACHINE SIMULATOR                         ║
-║                                                                               ║
-║  Una simulación completa de una máquina virtual Kali Linux con herramientas   ║
-║  de seguridad, penetración y análisis de vulnerabilidade                      ║
-║                                                                               ║
-║  Versión: 1.0                                                                 ║
-║  Autor: Ciberespai Team                                                       ║
-║  Año: 2026                                                                    ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
+KALI LINUX VIRTUAL MACHINE SIMULATOR ║
+║ ║
+║ A complete simulation of a Kali Linux virtual machine with ║
+║ security, penetration testing, and vulnerability analysis tools ║
+║ ║
+║ Version: 1.0 ║
+║ Author: Ciberespai Team ║
+║ Year: 2026 ║
 
                                                                                 
          KALI LINUX VIRTUAL MACHINE SIMULATOR v3.0                       
