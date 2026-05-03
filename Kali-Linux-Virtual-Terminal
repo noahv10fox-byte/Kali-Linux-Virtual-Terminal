@@ -1,0 +1,1986 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                  KALI LINUX VIRTUAL MACHINE SIMULATOR                         ║
+║                                                                               ║
+║  Una simulación completa de una máquina virtual Kali Linux con herramientas  ║
+║  de seguridad, penetración y análisis de vulnerabilidades.                   ║
+║                                                                               ║
+║  Versión: 3.0                                                                 ║
+║  Autor: Security Team                                                         ║
+║  Año: 2026                                                                    ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+"""
+
+import os
+import sys
+import time
+import json
+import random
+import hashlib
+import socket
+import subprocess
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Any, Tuple, Optional
+import base64
+import re
+
+
+class VirtualFileSystem:
+    """Sistema de archivos virtual para simular Kali Linux"""
+    
+    def __init__(self):
+        self.root = {
+            'bin': self._create_bin_directory(),
+            'sbin': self._create_sbin_directory(),
+            'etc': self._create_etc_directory(),
+            'home': self._create_home_directory(),
+            'root': self._create_root_directory(),
+            'opt': self._create_opt_directory(),
+            'usr': self._create_usr_directory(),
+            'var': self._create_var_directory(),
+            'tmp': {},
+            'dev': self._create_dev_directory(),
+            'proc': self._create_proc_directory(),
+            'sys': {},
+        }
+        self.current_dir = '/root'
+        self.current_user = 'root'
+        
+    def _create_bin_directory(self) -> Dict:
+        """Crea el directorio /bin con utilidades comunes"""
+        return {
+            'ls': {'type': 'file', 'size': 4096, 'permissions': '755'},
+            'cat': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'echo': {'type': 'file', 'size': 2048, 'permissions': '755'},
+            'cd': {'type': 'file', 'size': 1024, 'permissions': '755'},
+            'pwd': {'type': 'file', 'size': 1024, 'permissions': '755'},
+            'mkdir': {'type': 'file', 'size': 4096, 'permissions': '755'},
+            'rm': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'grep': {'type': 'file', 'size': 16384, 'permissions': '755'},
+            'find': {'type': 'file', 'size': 20480, 'permissions': '755'},
+            'chmod': {'type': 'file', 'size': 4096, 'permissions': '755'},
+            'chown': {'type': 'file', 'size': 4096, 'permissions': '755'},
+        }
+    
+    def _create_sbin_directory(self) -> Dict:
+        """Crea el directorio /sbin con comandos del sistema"""
+        return {
+            'ifconfig': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'iptables': {'type': 'file', 'size': 16384, 'permissions': '755'},
+            'iwconfig': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'ip': {'type': 'file', 'size': 10240, 'permissions': '755'},
+            'route': {'type': 'file', 'size': 6144, 'permissions': '755'},
+            'nstat': {'type': 'file', 'size': 4096, 'permissions': '755'},
+        }
+    
+    def _create_etc_directory(self) -> Dict:
+        """Crea el directorio /etc con archivos de configuración"""
+        return {
+            'passwd': {
+                'type': 'file',
+                'size': 2048,
+                'permissions': '644',
+                'content': """root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+gnats:x:41:41:Gnats Bug-Reporting System:/var/lib/gnats:/usr/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+systemd-network:x:100:102:systemd Network Management:/run/systemd:/usr/sbin/nologin
+systemd-resolve:x:101:103:systemd Resolver:/run/systemd:/usr/sbin/nologin
+syslog:x:102:106::/home/syslog:/usr/sbin/nologin
+messagebus:x:103:107::/run/dbus:/usr/sbin/nologin
+_apt:x:104:65534::/nonexistent:/usr/sbin/nologin
+tcpdump:x:105:111::/nonexistent:/usr/sbin/nologin
+landscape:x:106:112::/var/lib/landscape:/usr/sbin/nologin
+pollinate:x:107:1::/var/cache/pollinate:/bin/false
+sshd:x:108:65534::/run/sshd:/usr/sbin/nologin
+usbmux:x:109:46:usbmux daemon,,,:/var/lib/usbmux:/usr/sbin/nologin
+rtkit:x:110:114:RealtimeKit,,,:/proc:/usr/sbin/nologin
+dnsmasq:x:111:65534:dnsmasq,,,:/var/lib/misc:/usr/sbin/nologin
+avahi:x:112:120:Avahi mDNS daemon,,,:/var/run/avahi-daemon:/usr/sbin/nologin
+cups-pk-helper:x:113:121:user for cups-pk-helper service,,,:/home/cups-pk-helper:/usr/sbin/nologin
+speech-dispatcher:x:114:29:Speech Dispatcher,,,:/var/run/speech-dispatcher:/bin/false
+avahi-autoipd:x:115:122:Avahi autoip daemon,,,:/var/lib/avahi-autoipd:/usr/sbin/nologin
+saned:x:116:123::/var/lib/saned:/usr/sbin/nologin
+colord:x:117:124:colord colour management daemon,,,:/var/lib/colord:/usr/sbin/nologin
+geoclue:x:118:125::/var/lib/geoclue:/usr/sbin/nologin
+pulse:x:119:126:PulseAudio daemon,,,:/var/run/pulse:/usr/sbin/nologin
+statsd:x:120:127::/var/lib/statsd:/usr/sbin/nologin
+debian-tor:x:121:128:Tor anonymity daemon,,,:/var/lib/tor:/bin/false
+redis:x:122:129:redis server,,,:/var/lib/redis:/usr/sbin/nologin
+mysql:x:123:130:MySQL Server,,,:/nonexistent:/bin/false
+postgres:x:124:131:PostgreSQL administrator,,,:/var/lib/postgresql:/bin/bash
+docker:x:1000:1000:Docker User:/home/docker:/bin/bash
+kali:x:1001:1001:Kali,,,:/home/kali:/bin/bash"""
+            },
+            'hostname': {'type': 'file', 'size': 16, 'permissions': '644', 'content': 'kali-linux'},
+            'hosts': {
+                'type': 'file',
+                'size': 256,
+                'permissions': '644',
+                'content': """127.0.0.1	localhost
+::1		localhost
+127.0.0.1	kali-linux
+127.0.0.1	kali-linux.localdomain"""
+            },
+            'os-release': {
+                'type': 'file',
+                'size': 512,
+                'permissions': '644',
+                'content': """NAME="Kali Linux"
+VERSION_ID="2026.1"
+VERSION="2026.1 (Kali-last-snapshot)"
+VERSION_CODENAME=kali-rolling
+ID=kali
+ID_LIKE="debian"
+HOME_URL="https://www.kali.org/"
+DOCUMENTATION_URL="https://docs.kali.org/"
+SUPPORT_URL="https://forums.kali.org/"
+BUG_REPORT_URL="https://bugs.kali.org/"
+PRIVACY_POLICY_URL="https://www.kali.org/privacy-policy/"
+LOGO=kali-linux"""
+            },
+            'shadow': {'type': 'file', 'size': 1024, 'permissions': '600'},
+            'sudoers': {'type': 'file', 'size': 512, 'permissions': '440'},
+            'fstab': {'type': 'file', 'size': 512, 'permissions': '644'},
+            'ssh': {},
+            'network': {},
+        }
+    
+    def _create_home_directory(self) -> Dict:
+        """Crea el directorio /home"""
+        return {
+            'kali': {
+                'Downloads': {},
+                'Documents': {},
+                'Desktop': {},
+            }
+        }
+    
+    def _create_root_directory(self) -> Dict:
+        """Crea el directorio /root (home del usuario root)"""
+        return {
+            'tools': {},
+            'wordlists': {},
+            'scripts': {},
+            'notes.txt': {'type': 'file', 'size': 256, 'permissions': '600'},
+        }
+    
+    def _create_opt_directory(self) -> Dict:
+        """Crea el directorio /opt con herramientas de seguridad"""
+        return {
+            'metasploit': {
+                'modules': {},
+                'exploits': {},
+                'payloads': {},
+            },
+            'burp': {
+                'plugins': {},
+                'projects': {},
+            },
+            'gobuster': {},
+            'hashcat': {},
+            'wireshark': {},
+            'john': {},
+            'aircrack-ng': {},
+        }
+    
+    def _create_usr_directory(self) -> Dict:
+        """Crea el directorio /usr"""
+        return {
+            'bin': self._create_usr_bin_directory(),
+            'local': {'bin': {}, 'lib': {}},
+            'share': {'doc': {}, 'man': {}},
+        }
+    
+    def _create_usr_bin_directory(self) -> Dict:
+        """Crea /usr/bin con herramientas de Kali"""
+        return {
+            'nmap': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'metasploit': {'type': 'file', 'size': 16384, 'permissions': '755'},
+            'sqlmap': {'type': 'file', 'size': 12288, 'permissions': '755'},
+            'burpsuite': {'type': 'file', 'size': 20480, 'permissions': '755'},
+            'aircrack-ng': {'type': 'file', 'size': 10240, 'permissions': '755'},
+            'hashcat': {'type': 'file', 'size': 15360, 'permissions': '755'},
+            'john': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'wireshark': {'type': 'file', 'size': 24576, 'permissions': '755'},
+            'tcpdump': {'type': 'file', 'size': 6144, 'permissions': '755'},
+            'hydra': {'type': 'file', 'size': 10240, 'permissions': '755'},
+            'whois': {'type': 'file', 'size': 4096, 'permissions': '755'},
+            'dig': {'type': 'file', 'size': 6144, 'permissions': '755'},
+            'nslookup': {'type': 'file', 'size': 5120, 'permissions': '755'},
+            'gobuster': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'nikto': {'type': 'file', 'size': 12288, 'permissions': '755'},
+            'wpscan': {'type': 'file', 'size': 14336, 'permissions': '755'},
+            'masscan': {'type': 'file', 'size': 6144, 'permissions': '755'},
+            'openssl': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'ssh': {'type': 'file', 'size': 4096, 'permissions': '755'},
+            'ssh-keygen': {'type': 'file', 'size': 3072, 'permissions': '755'},
+            'curl': {'type': 'file', 'size': 5120, 'permissions': '755'},
+            'wget': {'type': 'file', 'size': 6144, 'permissions': '755'},
+            'git': {'type': 'file', 'size': 8192, 'permissions': '755'},
+            'python3': {'type': 'file', 'size': 10240, 'permissions': '755'},
+            'perl': {'type': 'file', 'size': 12288, 'permissions': '755'},
+            'ruby': {'type': 'file', 'size': 9216, 'permissions': '755'},
+            'nc': {'type': 'file', 'size': 4096, 'permissions': '755'},
+            'msfconsole': {'type': 'file', 'size': 16384, 'permissions': '755'},
+        }
+    
+    def _create_var_directory(self) -> Dict:
+        """Crea el directorio /var"""
+        return {
+            'log': {
+                'auth.log': {'type': 'file', 'size': 20480, 'permissions': '640'},
+                'syslog': {'type': 'file', 'size': 30720, 'permissions': '640'},
+                'kernel.log': {'type': 'file', 'size': 15360, 'permissions': '640'},
+            },
+            'tmp': {},
+            'cache': {},
+        }
+    
+    def _create_dev_directory(self) -> Dict:
+        """Crea el directorio /dev"""
+        return {
+            'null': {'type': 'device', 'permissions': '666'},
+            'zero': {'type': 'device', 'permissions': '666'},
+            'random': {'type': 'device', 'permissions': '644'},
+            'urandom': {'type': 'device', 'permissions': '644'},
+            'tty': {'type': 'device', 'permissions': '666'},
+            'pts': {'type': 'directory'},
+        }
+    
+    def _create_proc_directory(self) -> Dict:
+        """Crea el directorio /proc"""
+        return {
+            'version': {'type': 'file', 'size': 1024, 'permissions': '444'},
+            'uptime': {'type': 'file', 'size': 128, 'permissions': '444'},
+            'meminfo': {'type': 'file', 'size': 2048, 'permissions': '444'},
+            'cpuinfo': {'type': 'file', 'size': 4096, 'permissions': '444'},
+            'net': {},
+            'sys': {},
+        }
+    
+    def get_file_path(self, path: str) -> List[str]:
+        """Divide un path en sus componentes"""
+        if path.startswith('/'):
+            path = path[1:]
+        if path.endswith('/'):
+            path = path[:-1]
+        if path == '':
+            return ['']
+        return path.split('/')
+
+
+class KaliLinuxVM:
+    """Clase principal de la máquina virtual Kali Linux"""
+    
+    def __init__(self):
+        self.filesystem = VirtualFileSystem()
+        self.processes = self._initialize_processes()
+        self.network_interfaces = self._initialize_network()
+        self.users = {
+            'root': {'password': 'toor', 'uid': 0, 'gid': 0},
+            'kali': {'password': 'kali', 'uid': 1000, 'gid': 1000},
+        }
+        self.current_user = 'root'
+        self.logged_in = False
+        self.command_history = []
+        self.system_logs = []
+        self.running = True
+        self.environment_vars = self._initialize_env()
+        self.network_connections = []
+        self.open_ports = self._initialize_ports()
+        self.tools_database = self._initialize_tools()
+        
+    def _initialize_processes(self) -> Dict[str, Dict]:
+        """Inicializa procesos del sistema"""
+        return {
+            'init': {'pid': 1, 'ppid': 0, 'status': 'running'},
+            'kthreadd': {'pid': 2, 'ppid': 0, 'status': 'running'},
+            'rcu_sched': {'pid': 3, 'ppid': 2, 'status': 'running'},
+            'kworker': {'pid': 4, 'ppid': 2, 'status': 'running'},
+            'systemd': {'pid': 500, 'ppid': 1, 'status': 'running'},
+            'sshd': {'pid': 501, 'ppid': 1, 'status': 'running'},
+            'bash': {'pid': 502, 'ppid': 501, 'status': 'running'},
+        }
+    
+    def _initialize_network(self) -> Dict[str, Dict]:
+        """Inicializa interfaces de red"""
+        return {
+            'eth0': {
+                'ip': '192.168.1.100',
+                'netmask': '255.255.255.0',
+                'gateway': '192.168.1.1',
+                'mac': '08:00:27:6a:5b:3c',
+                'status': 'up',
+                'rx_packets': random.randint(1000, 50000),
+                'tx_packets': random.randint(500, 30000),
+            },
+            'lo': {
+                'ip': '127.0.0.1',
+                'netmask': '255.0.0.0',
+                'status': 'up',
+                'rx_packets': random.randint(5000, 100000),
+                'tx_packets': random.randint(5000, 100000),
+            },
+            'wlan0': {
+                'ip': '192.168.0.50',
+                'netmask': '255.255.255.0',
+                'gateway': '192.168.0.1',
+                'mac': '00:1a:2b:3c:4d:5e',
+                'status': 'up',
+                'rx_packets': random.randint(2000, 80000),
+                'tx_packets': random.randint(1000, 50000),
+            },
+        }
+    
+    def _initialize_env(self) -> Dict[str, str]:
+        """Inicializa variables de entorno"""
+        return {
+            'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games',
+            'HOME': '/root',
+            'USER': 'root',
+            'SHELL': '/bin/bash',
+            'TERM': 'xterm-256color',
+            'LANG': 'en_US.UTF-8',
+            'PWD': '/root',
+            'OLDPWD': '/',
+            'HOSTNAME': 'kali-linux',
+            'LOGNAME': 'root',
+            'UID': '0',
+            'MAIL': '/var/mail/root',
+        }
+    
+    def _initialize_ports(self) -> Dict[int, str]:
+        """Inicializa puertos abiertos"""
+        return {
+            22: 'sshd',
+            80: 'apache2',
+            443: 'apache2',
+            3306: 'mysql',
+            5432: 'postgres',
+            8080: 'tomcat',
+            8888: 'http-alt',
+        }
+    
+    def _initialize_tools(self) -> Dict[str, Dict]:
+        """Inicializa la base de datos de herramientas de seguridad"""
+        return {
+            'nmap': {
+                'description': 'Network Mapper - Herramienta de escaneo de puertos y detección de servicios',
+                'version': '7.93',
+                'uses': 'Escaneo de redes y puertos',
+            },
+            'metasploit': {
+                'description': 'Framework de pruebas de penetración más popular',
+                'version': '6.3.0',
+                'uses': 'Exploit de vulnerabilidades',
+            },
+            'sqlmap': {
+                'description': 'Herramienta de inyección SQL automática',
+                'version': '1.7.5',
+                'uses': 'Detección y explotación de inyecciones SQL',
+            },
+            'burpsuite': {
+                'description': 'Plataforma de pruebas de seguridad web',
+                'version': '2024.1.1',
+                'uses': 'Análisis de aplicaciones web',
+            },
+            'aircrack-ng': {
+                'description': 'Suite de herramientas para auditoría de redes WiFi',
+                'version': '1.7',
+                'uses': 'Crack de contraseñas WiFi y análisis inalámbrico',
+            },
+            'hashcat': {
+                'description': 'Acelerador de cracking de contraseñas basado en GPU',
+                'version': '6.2.6',
+                'uses': 'Cracking de contraseñas',
+            },
+            'john': {
+                'description': 'John the Ripper - Herramienta de cracking de contraseñas',
+                'version': '1.9.0',
+                'uses': 'Cracking de hashes de contraseñas',
+            },
+            'wireshark': {
+                'description': 'Analizador de protocolos de red',
+                'version': '4.2.1',
+                'uses': 'Captura y análisis de tráfico de red',
+            },
+            'hydra': {
+                'description': 'Herramienta de fuerza bruta de servicios de red',
+                'version': '9.4',
+                'uses': 'Ataques de fuerza bruta',
+            },
+            'gobuster': {
+                'description': 'Herramienta de enumeración de directorios web',
+                'version': '3.6',
+                'uses': 'Fuzzing y descubrimiento de directorios',
+            },
+            'nikto': {
+                'description': 'Scanner de vulnerabilidades web',
+                'version': '2.5.0',
+                'uses': 'Escaneo de vulnerabilidades en servidores web',
+            },
+        }
+
+
+class CommandInterpreter:
+    """Intérprete de comandos para la máquina virtual Kali Linux"""
+    
+    def __init__(self, vm: KaliLinuxVM):
+        self.vm = vm
+        self.built_in_commands = {
+            'help': self.cmd_help,
+            'whoami': self.cmd_whoami,
+            'pwd': self.cmd_pwd,
+            'cd': self.cmd_cd,
+            'ls': self.cmd_ls,
+            'cat': self.cmd_cat,
+            'echo': self.cmd_echo,
+            'clear': self.cmd_clear,
+            'exit': self.cmd_exit,
+            'ifconfig': self.cmd_ifconfig,
+            'ipconfig': self.cmd_ipconfig,
+            'ip': self.cmd_ip,
+            'ifstat': self.cmd_ifstat,
+            'route': self.cmd_route,
+            'netstat': self.cmd_netstat,
+            'ss': self.cmd_ss,
+            'ps': self.cmd_ps,
+            'ps aux': self.cmd_ps_aux,
+            'top': self.cmd_top,
+            'uname': self.cmd_uname,
+            'hostname': self.cmd_hostname,
+            'date': self.cmd_date,
+            'uptime': self.cmd_uptime,
+            'df': self.cmd_df,
+            'du': self.cmd_du,
+            'free': self.cmd_free,
+            'sudo': self.cmd_sudo,
+            'su': self.cmd_su,
+            'history': self.cmd_history,
+            'mkdir': self.cmd_mkdir,
+            'touch': self.cmd_touch,
+            'rm': self.cmd_rm,
+            'cp': self.cmd_cp,
+            'mv': self.cmd_mv,
+            'nmap': self.cmd_nmap,
+            'netcat': self.cmd_netcat,
+            'nc': self.cmd_netcat,
+            'curl': self.cmd_curl,
+            'wget': self.cmd_wget,
+            'ping': self.cmd_ping,
+            'traceroute': self.cmd_traceroute,
+            'whois': self.cmd_whois,
+            'dig': self.cmd_dig,
+            'nslookup': self.cmd_nslookup,
+            'iptables': self.cmd_iptables,
+            'ssh': self.cmd_ssh,
+            'ssh-keygen': self.cmd_ssh_keygen,
+            'systemctl': self.cmd_systemctl,
+            'service': self.cmd_service,
+            'apt': self.cmd_apt,
+            'apt-get': self.cmd_apt_get,
+            'nano': self.cmd_nano,
+            'vi': self.cmd_vi,
+            'vim': self.cmd_vim,
+            'grep': self.cmd_grep,
+            'find': self.cmd_find,
+            'locate': self.cmd_locate,
+            'which': self.cmd_which,
+            'whereis': self.cmd_whereis,
+            'man': self.cmd_man,
+            'info': self.cmd_info,
+            'metasploit': self.cmd_metasploit,
+            'msfconsole': self.cmd_msfconsole,
+            'msfvenom': self.cmd_msfvenom,
+            'sqlmap': self.cmd_sqlmap,
+            'hydra': self.cmd_hydra,
+            'hashcat': self.cmd_hashcat,
+            'john': self.cmd_john,
+            'aircrack-ng': self.cmd_aircrack_ng,
+            'airodump-ng': self.cmd_airodump_ng,
+            'aireplay-ng': self.cmd_aireplay_ng,
+            'airmon-ng': self.cmd_airmon_ng,
+            'wireshark': self.cmd_wireshark,
+            'tcpdump': self.cmd_tcpdump,
+            'burpsuite': self.cmd_burpsuite,
+            'nikto': self.cmd_nikto,
+            'gobuster': self.cmd_gobuster,
+            'wpscan': self.cmd_wpscan,
+            'tools': self.cmd_tools,
+            'exploit': self.cmd_exploit,
+            'payload': self.cmd_payload,
+            'scan': self.cmd_scan,
+            'enum': self.cmd_enum,
+            'crack': self.cmd_crack,
+            'ssh-keyscan': self.cmd_ssh_keyscan,
+            'nmap-scan': self.cmd_nmap_scan,
+            'network-test': self.cmd_network_test,
+            'vulnerability-scan': self.cmd_vulnerability_scan,
+            'wordlist': self.cmd_wordlist,
+            'setuid': self.cmd_setuid,
+            'chmod': self.cmd_chmod,
+            'chown': self.cmd_chown,
+            'whoami': self.cmd_whoami,
+            'id': self.cmd_id,
+            'groups': self.cmd_groups,
+            'sudo -l': self.cmd_sudo_l,
+            'env': self.cmd_env,
+            'export': self.cmd_export,
+            'unset': self.cmd_unset,
+            'alias': self.cmd_alias,
+            'unalias': self.cmd_unalias,
+            'source': self.cmd_source,
+            'sleep': self.cmd_sleep,
+            'time': self.cmd_time,
+            'timeout': self.cmd_timeout,
+            'benchmark': self.cmd_benchmark,
+            'exploit-db': self.cmd_exploit_db,
+            'cve-search': self.cmd_cve_search,
+            'searchsploit': self.cmd_searchsploit,
+            'lynis': self.cmd_lynis,
+            'chkrootkit': self.cmd_chkrootkit,
+            'rkhunter': self.cmd_rkhunter,
+            'clamav': self.cmd_clamav,
+            'openssl': self.cmd_openssl,
+            'ssl-test': self.cmd_ssl_test,
+        }
+    
+    def execute_command(self, command_line: str) -> str:
+        """Ejecuta un comando y retorna el resultado"""
+        if not command_line.strip():
+            return ''
+        
+        # Agregar a historial
+        self.vm.command_history.append(command_line)
+        
+        # Dividir el comando
+        parts = command_line.split()
+        command = parts[0].lower()
+        args = parts[1:] if len(parts) > 1 else []
+        
+        # Buscar el comando
+        if command in self.built_in_commands:
+            try:
+                result = self.built_in_commands[command](args)
+                return result
+            except Exception as e:
+                return f"Error ejecutando {command}: {str(e)}"
+        else:
+            return f"bash: {command}: command not found"
+    
+    # ==================== COMANDOS BÁSICOS ====================
+    
+    def cmd_help(self, args: List[str]) -> str:
+        """Muestra ayuda de comandos disponibles"""
+        help_text = """
+╔════════════════════════════════════════════════════════════════╗
+║            KALI LINUX VIRTUAL MACHINE - HELP                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+COMANDOS DEL SISTEMA:
+  whoami              - Muestra el usuario actual
+  pwd                 - Muestra el directorio de trabajo actual
+  cd [dir]            - Cambia de directorio
+  ls [ruta]           - Lista archivos y directorios
+  clear               - Limpia la pantalla
+  exit                - Salir del sistema
+
+COMANDOS DE RED:
+  ifconfig            - Muestra información de interfaces de red
+  ip                  - Utilidad de configuración de red avanzada
+  ping [host]         - Envía paquetes ICMP
+  traceroute [host]   - Muestra la ruta a un host
+  netstat             - Muestra conexiones de red y puertos abiertos
+  ss                  - Utilidad de socket de estadísticas
+  route               - Muestra tabla de rutas
+  whois [dominio]     - Información WHOIS
+  dig [dominio]       - Herramienta de consultas DNS
+  nslookup [dominio]  - Consulta de resolución de nombres
+
+HERRAMIENTAS DE SEGURIDAD:
+  nmap                - Escaneo de puertos y detección de servicios
+  metasploit          - Framework de penetración
+  sqlmap              - Inyección SQL automática
+  burpsuite           - Scanner web
+  hydra               - Ataque de fuerza bruta
+  hashcat             - Cracking de contraseñas GPU
+  john                - Cracking de hashes
+  aircrack-ng         - Crack de WiFi
+  wireshark           - Analizador de protocolos
+  nikto               - Scanner de vulnerabilidades web
+  gobuster            - Enumeración de directorios
+  wpscan              - Scanner de WordPress
+  lynis               - Auditoría de seguridad
+  
+COMANDOS DE ARCHIVO:
+  cat [archivo]       - Muestra contenido de archivo
+  echo [texto]        - Imprime texto
+  mkdir [dir]         - Crea directorio
+  touch [archivo]     - Crea archivo vacío
+  rm [archivo]        - Elimina archivo
+  cp [src] [dst]      - Copia archivo
+  mv [src] [dst]      - Mueve/renombra archivo
+  grep [patrón]       - Busca patrón en archivos
+  find [ruta]         - Busca archivos
+
+INFORMACIÓN DEL SISTEMA:
+  uname               - Información del kernel
+  hostname            - Nombre del host
+  date                - Fecha y hora actual
+  uptime              - Tiempo de funcionamiento
+  df                  - Espacio en disco
+  free                - Memoria disponible
+  ps                  - Procesos en ejecución
+  top                 - Monitor de procesos
+
+UTILITARIOS:
+  tools               - Lista todas las herramientas disponibles
+  history             - Muestra historial de comandos
+  help                - Muestra esta ayuda
+  scan [tipo]         - Realiza un escaneo de seguridad
+  exploit [nombre]    - Ejecuta un exploit
+  payload [tipo]      - Genera un payload
+"""
+        return help_text
+    
+    def cmd_whoami(self, args: List[str]) -> str:
+        """Muestra el usuario actual"""
+        return self.vm.current_user
+    
+    def cmd_pwd(self, args: List[str]) -> str:
+        """Muestra el directorio de trabajo actual"""
+        return self.vm.filesystem.current_dir
+    
+    def cmd_cd(self, args: List[str]) -> str:
+        """Cambia de directorio"""
+        if not args:
+            self.vm.filesystem.current_dir = '/root'
+            return ''
+        
+        path = args[0]
+        if path == '/':
+            self.vm.filesystem.current_dir = '/'
+        elif path == '..':
+            parts = self.vm.filesystem.current_dir.split('/')
+            if len(parts) > 2:
+                self.vm.filesystem.current_dir = '/'.join(parts[:-1])
+            else:
+                self.vm.filesystem.current_dir = '/'
+        else:
+            if not path.startswith('/'):
+                if self.vm.filesystem.current_dir == '/':
+                    path = '/' + path
+                else:
+                    path = self.vm.filesystem.current_dir + '/' + path
+            self.vm.filesystem.current_dir = path
+        
+        return ''
+    
+    def cmd_ls(self, args: List[str]) -> str:
+        """Lista archivos y directorios"""
+        path = args[0] if args else self.vm.filesystem.current_dir
+        
+        output = f"\n{'ARCHIVO/DIRECTORIO':<30} {'TIPO':<15} {'PERMISOS':<10} {'TAMAÑO':<10}\n"
+        output += "─" * 70 + "\n"
+        
+        dirs = ['..', 'bin', 'etc', 'home', 'usr', 'var', 'root', 'opt']
+        for d in dirs:
+            output += f"{d:<30} {'dir':<15} {'drwxr-xr-x':<10} {'4096':<10}\n"
+        
+        return output
+    
+    def cmd_cat(self, args: List[str]) -> str:
+        """Muestra contenido de archivo"""
+        if not args:
+            return "uso: cat [archivo]"
+        
+        file_name = args[0]
+        
+        if 'passwd' in file_name:
+            return self.vm.filesystem.root['etc']['passwd']['content']
+        elif 'hosts' in file_name:
+            return self.vm.filesystem.root['etc']['hosts']['content']
+        elif 'os-release' in file_name:
+            return self.vm.filesystem.root['etc']['os-release']['content']
+        else:
+            return f"cat: {file_name}: No such file or directory"
+    
+    def cmd_echo(self, args: List[str]) -> str:
+        """Imprime texto"""
+        return ' '.join(args)
+    
+    def cmd_clear(self, args: List[str]) -> str:
+        """Limpia la pantalla"""
+        return "\n" * 50
+    
+    def cmd_exit(self, args: List[str]) -> str:
+        """Salir del sistema"""
+        self.vm.running = False
+        return "Saliendo del sistema Kali Linux...\n"
+    
+    # ==================== COMANDOS DE RED ====================
+    
+    def cmd_ifconfig(self, args: List[str]) -> str:
+        """Muestra configuración de interfaces de red"""
+        output = "\n"
+        for interface, config in self.vm.network_interfaces.items():
+            output += f"{interface}: flags=UP,BROADCAST,RUNNING,MULTICAST\n"
+            output += f"        inet {config['ip']}  netmask {config['netmask']}\n"
+            if 'gateway' in config:
+                output += f"        gateway {config['gateway']}\n"
+            output += f"        hwaddr {config.get('mac', '00:00:00:00:00:00')}\n"
+            output += f"        RX packets:{config['rx_packets']}  TX packets:{config['tx_packets']}\n\n"
+        return output
+    
+    def cmd_ipconfig(self, args: List[str]) -> str:
+        """Alias de ifconfig para compatibilidad"""
+        return self.cmd_ifconfig(args)
+    
+    def cmd_ip(self, args: List[str]) -> str:
+        """Utilidad de configuración de red avanzada"""
+        if not args or args[0] == 'addr' or args[0] == 'address':
+            output = "\n"
+            for interface, config in self.vm.network_interfaces.items():
+                output += f"1: {interface}: <UP,BROADCAST,RUNNING,MULTICAST>\n"
+                output += f"    link/ether {config.get('mac', '00:00:00:00:00:00')}\n"
+                output += f"    inet {config['ip']}/{self._ip_to_cidr(config['netmask'])}\n\n"
+            return output
+        return "uso: ip [addr|route|link|...]"
+    
+    def cmd_ifstat(self, args: List[str]) -> str:
+        """Muestra estadísticas de interfaces"""
+        output = "\n     CPU    user  system    irq idle\n"
+        output += f"    {random.randint(1,100)}%    {random.randint(20,60)}    {random.randint(10,40)}    {random.randint(1,5)}   {random.randint(20,80)}\n\n"
+        return output
+    
+    def cmd_route(self, args: List[str]) -> str:
+        """Muestra tabla de rutas"""
+        output = "\nKernel IP routing table\n"
+        output += "Destination     Gateway         Genmask         Flags Metric Ref    Use Iface\n"
+        output += "default         192.168.1.1     0.0.0.0         UG    100    0        0 eth0\n"
+        output += "192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0\n"
+        output += "169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth0\n"
+        return output
+    
+    def cmd_netstat(self, args: List[str]) -> str:
+        """Muestra conexiones y puertos abiertos"""
+        output = "\nActive Internet connections (servers and established)\n"
+        output += "Proto Local Address           Foreign Address         State\n"
+        
+        for port, service in self.vm.open_ports.items():
+            output += f"tcp   127.0.0.1:{port:<15} 0.0.0.0:*                LISTEN\n"
+        
+        output += f"tcp   192.168.1.100:22       192.168.1.50:54321      ESTABLISHED\n"
+        output += f"tcp   192.168.1.100:443      192.168.1.75:43210      TIME_WAIT\n"
+        output += f"udp   192.168.1.100:53       0.0.0.0:*\n"
+        
+        return output
+    
+    def cmd_ss(self, args: List[str]) -> str:
+        """Utilidad de socket de estadísticas"""
+        output = "\nNetid  State    Recv-Q Send-Q Local Address:Port    Peer Address:Port\n"
+        for port, service in self.vm.open_ports.items():
+            output += f"tcp   LISTEN   0      128    127.0.0.1:{port:<12} 0.0.0.0:*\n"
+        return output
+    
+    def cmd_ping(self, args: List[str]) -> str:
+        """Envía paquetes ICMP"""
+        if not args:
+            return "uso: ping [host]"
+        
+        host = args[0]
+        output = f"\nPING {host} ({self._simulate_ip()}) 56(84) bytes of data.\n"
+        for i in range(4):
+            output += f"64 bytes from {self._simulate_ip()}: icmp_seq={i+1} ttl={random.randint(50,64)} time={random.randint(1,100)}ms\n"
+        output += f"\n--- {host} statistics ---\n"
+        output += f"4 packets transmitted, 4 received, 0% packet loss, time {random.randint(100,500)}ms\n"
+        return output
+    
+    def cmd_traceroute(self, args: List[str]) -> str:
+        """Muestra la ruta a un host"""
+        if not args:
+            return "uso: traceroute [host]"
+        
+        host = args[0]
+        output = f"\ntraceroute to {host} ({self._simulate_ip()}), 30 hops max, 60 byte packets\n"
+        for i in range(1, random.randint(8, 15)):
+            output += f" {i}  router{i}.local ({self._simulate_ip()})  {random.randint(1,50)}ms  {random.randint(1,50)}ms  {random.randint(1,50)}ms\n"
+        return output
+    
+    def cmd_whois(self, args: List[str]) -> str:
+        """Información WHOIS"""
+        if not args:
+            return "uso: whois [dominio]"
+        
+        domain = args[0]
+        output = f"\nDomain Name: {domain}\n"
+        output += f"Registry Domain ID: D{random.randint(100000000, 999999999)}-LROR\n"
+        output += "Registrar WHOIS Server: whois.registrar.com\n"
+        output += "Registrar URL: http://www.registrar.com\n"
+        output += f"Updated Date: {datetime.now().strftime('%Y-%m-%d')}\n"
+        output += "Creation Date: 2010-01-15T10:20:00Z\n"
+        output += "Registry Expiry Date: 2025-01-15T10:20:00Z\n"
+        output += "Registrar: Registrar, Inc.\n"
+        output += "Admin Name: Admin Contact\n"
+        output += "Admin Email: admin@example.com\n"
+        return output
+    
+    def cmd_dig(self, args: List[str]) -> str:
+        """Herramienta de consultas DNS"""
+        if not args:
+            return "uso: dig [dominio]"
+        
+        domain = args[0]
+        output = f"\n; <<>> DiG 9.16.1 <<>> {domain}\n"
+        output += f"; (1 server found)\n"
+        output += f";; global options: +cmd\n"
+        output += f";; Got answer:\n"
+        output += f";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 12345\n"
+        output += f"; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 3, ADDITIONAL: 4\n\n"
+        output += f";; QUESTION SECTION:\n"
+        output += f";{domain}.\t\t\tIN\tA\n\n"
+        output += f";; ANSWER SECTION:\n"
+        output += f"{domain}.\t300\tIN\tA\t{self._simulate_ip()}\n"
+        output += f"{domain}.\t300\tIN\tA\t{self._simulate_ip()}\n\n"
+        output += f";; Query time: {random.randint(1,50)} msec\n"
+        output += f";; SERVER: 8.8.8.8#53({self._simulate_ip()})\n"
+        return output
+    
+    def cmd_nslookup(self, args: List[str]) -> str:
+        """Consulta de resolución de nombres"""
+        if not args:
+            return "uso: nslookup [dominio]"
+        
+        domain = args[0]
+        output = f"\nServer: 8.8.8.8\n"
+        output += f"Address: 8.8.8.8#53\n\n"
+        output += f"Non-authoritative answer:\n"
+        output += f"Name: {domain}\n"
+        output += f"Address: {self._simulate_ip()}\n"
+        return output
+    
+    def cmd_iptables(self, args: List[str]) -> str:
+        """Administración de firewall"""
+        if not args:
+            output = "\nChain INPUT (policy ACCEPT)\n"
+            output += "target   prot opt source      destination\n"
+            output += "ACCEPT   tcp  --  anywhere    anywhere     tcp dpt:ssh\n"
+            output += "ACCEPT   tcp  --  anywhere    anywhere     tcp dpt:http\n"
+            output += "ACCEPT   tcp  --  anywhere    anywhere     tcp dpt:https\n"
+            output += "REJECT   all  --  anywhere    anywhere     reject-with icmp-host-prohibited\n\n"
+            output += "Chain FORWARD (policy ACCEPT)\n"
+            output += "target   prot opt source      destination\n"
+            output += "REJECT   all  --  anywhere    anywhere     reject-with icmp-host-prohibited\n\n"
+            output += "Chain OUTPUT (policy ACCEPT)\n"
+            output += "target   prot opt source      destination\n"
+            return output
+        return f"iptables: comando '{' '.join(args)}' procesado"
+    
+    # ==================== COMANDOS DE SISTEMA ====================
+    
+    def cmd_uname(self, args: List[str]) -> str:
+        """Información del kernel"""
+        if not args:
+            return "Linux kali-linux 6.6.9-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.6.9-1kali1 (2024-01-08) x86_64 GNU/Linux"
+        elif args[0] == '-a':
+            return "Linux kali-linux 6.6.9-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.6.9-1kali1 (2024-01-08) x86_64 GNU/Linux"
+        elif args[0] == '-s':
+            return "Linux"
+        elif args[0] == '-r':
+            return "6.6.9-amd64"
+        else:
+            return "Linux"
+    
+    def cmd_hostname(self, args: List[str]) -> str:
+        """Nombre del host"""
+        if args:
+            return f"hostname set to {args[0]}"
+        return "kali-linux"
+    
+    def cmd_date(self, args: List[str]) -> str:
+        """Fecha y hora actual"""
+        return datetime.now().strftime("%a %b %d %H:%M:%S %Z %Y")
+    
+    def cmd_uptime(self, args: List[str]) -> str:
+        """Tiempo de funcionamiento"""
+        days = random.randint(1, 365)
+        hours = random.randint(0, 23)
+        minutes = random.randint(0, 59)
+        users = random.randint(1, 5)
+        load_avg_1 = round(random.uniform(0.1, 3.0), 2)
+        load_avg_5 = round(random.uniform(0.1, 3.0), 2)
+        load_avg_15 = round(random.uniform(0.1, 3.0), 2)
+        
+        return f" {self.cmd_date([])} up {days} days, {hours}:{minutes:02d}, {users} users, load average: {load_avg_1}, {load_avg_5}, {load_avg_15}"
+    
+    def cmd_df(self, args: List[str]) -> str:
+        """Espacio en disco"""
+        output = "\nFilesystem     1K-blocks    Used Available Use% Mounted on\n"
+        output += f"/dev/sda1      51391888 20000000 31391888  39% /\n"
+        output += f"/dev/sda2      10485760  2000000  8485760  19% /home\n"
+        output += f"/dev/sda3       5242880  1000000  4242880  19% /var\n"
+        output += f"tmpfs           4096000   100000  3996000   3% /tmp\n"
+        return output
+    
+    def cmd_du(self, args: List[str]) -> str:
+        """Uso de disco"""
+        output = "\n4.0K    ./bin\n"
+        output += "8.0K    ./etc\n"
+        output += "12K     ./home\n"
+        output += "16K     ./root\n"
+        output += "2.0M    ./opt\n"
+        output += "1.5M    ./usr\n"
+        output += "800K    ./var\n"
+        output += "4.5M    total\n"
+        return output
+    
+    def cmd_free(self, args: List[str]) -> str:
+        """Memoria disponible"""
+        output = "\n              total        used        free      shared  buff/cache   available\n"
+        output += f"Mem:       {16*1024*1024}      {8*1024*1024}      {6*1024*1024}       {512*1024}      {2*1024*1024}      {10*1024*1024}\n"
+        output += f"Swap:      {4*1024*1024}       {100*1024}      {4*1024*1024-100*1024}\n"
+        return output
+    
+    def cmd_id(self, args: List[str]) -> str:
+        """Muestra información de usuario"""
+        user = args[0] if args else self.vm.current_user
+        if user == 'root':
+            return "uid=0(root) gid=0(root) groups=0(root)"
+        else:
+            return f"uid=1000({user}) gid=1000({user}) groups=1000({user}),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),109(lpadmin),110(sambashare)"
+    
+    def cmd_groups(self, args: List[str]) -> str:
+        """Muestra grupos del usuario"""
+        user = args[0] if args else self.vm.current_user
+        if user == 'root':
+            return "root"
+        else:
+            return f"{user} adm cdrom sudo dip plugdev lpadmin sambashare"
+    
+    def cmd_sudo(self, args: List[str]) -> str:
+        """Ejecutar como superusuario"""
+        if not args:
+            return "uso: sudo [comando]"
+        return f"[sudo] ejecutando: {' '.join(args)}"
+    
+    def cmd_sudo_l(self, args: List[str]) -> str:
+        """Lista lo que puede ejecutar con sudo"""
+        if self.vm.current_user != 'root':
+            return "sudo: no se requiere contraseña para root"
+        output = "\nEntrada de Sudoers:\n"
+        output += "root ALL=(ALL:ALL) ALL\n"
+        output += "kali ALL=(ALL) NOPASSWD: /usr/bin/nmap, /usr/bin/metasploit, /usr/bin/aircrack-ng\n"
+        return output
+    
+    def cmd_su(self, args: List[str]) -> str:
+        """Cambiar usuario"""
+        if not args:
+            return "Ingresa contraseña para root:"
+        user = args[0]
+        if user in self.vm.users:
+            self.vm.current_user = user
+            return f"Cambiado a usuario {user}"
+        return f"Usuario {user} no existe"
+    
+    def cmd_ps(self, args: List[str]) -> str:
+        """Procesos en ejecución"""
+        output = "\n  PID TTY      STAT   TIME COMMAND\n"
+        for process, info in self.vm.processes.items():
+            output += f"{info['pid']:<6} pts/0   {info['status']:<6} 0:00 {process}\n"
+        return output
+    
+    def cmd_ps_aux(self, args: List[str]) -> str:
+        """Todos los procesos"""
+        output = "\nUSER       PID %CPU %MEM    VSZ   RSS TTY STAT START   TIME COMMAND\n"
+        output += "root         1  0.0  0.1  10000  2000 ?   Ss   10:00   0:01 /bin/systemd\n"
+        output += "root       500  0.0  0.2  15000  3000 ?   Ss   10:01   0:02 /usr/sbin/systemd\n"
+        output += "root       501  0.0  0.1  10000  2000 ?   Ss   10:02   0:00 /usr/sbin/sshd\n"
+        output += "root       502  0.1  0.3  20000  5000 pts/0 Ss  10:03   0:05 -bash\n"
+        output += "root       503  0.0  0.2  12000  3000 ?   S    10:04   0:01 /usr/bin/python3\n"
+        output += "root       504  0.0  0.1  10000  2000 ?   S    10:05   0:00 /usr/bin/msfconsole\n"
+        output += "root       505  0.0  0.2  18000  4000 ?   Sl   10:06   0:02 /usr/bin/nmap\n"
+        return output
+    
+    def cmd_top(self, args: List[str]) -> str:
+        """Monitor de procesos"""
+        output = "\ntop - 15:30:45 up 45 days,  2:10,  1 user,  load average: 0.95, 0.87, 0.82\n"
+        output += "Tasks: 120 total,   2 running, 118 sleeping,   0 stopped,   0 zombie\n"
+        output += "%Cpu(s):  5.2%us,  2.1%sy,  0.0%ni, 92.3%id,  0.4%wa,  0.0%hi,  0.0%si,  0.0%st\n"
+        output += "KiB Mem:  16384000 total, 8192000 used, 8192000 free,  512000 buffers\n"
+        output += "KiB Swap:  4194304 total,  100000 used, 4094304 free,  1024000 cached\n\n"
+        output += "  PID USER      PR  NI  VIRT  RES SHR S %CPU %MEM    TIME+  COMMAND\n"
+        output += "  502 root      20   0 20000 5000 2000 S  0.3  0.1  0:05.22 bash\n"
+        output += "  503 root      20   0 12000 3000 1500 S  0.1  0.0  0:01.10 python3\n"
+        output += "  504 root      20   0 10000 2000 1000 S  0.0  0.0  0:00.50 msfconsole\n"
+        return output
+    
+    # ==================== COMANDOS DE ARCHIVO ====================
+    
+    def cmd_mkdir(self, args: List[str]) -> str:
+        """Crea directorio"""
+        if not args:
+            return "uso: mkdir [directorio]"
+        return f"Directorio '{args[0]}' creado"
+    
+    def cmd_touch(self, args: List[str]) -> str:
+        """Crea archivo vacío"""
+        if not args:
+            return "uso: touch [archivo]"
+        return ""
+    
+    def cmd_rm(self, args: List[str]) -> str:
+        """Elimina archivo"""
+        if not args:
+            return "uso: rm [archivo]"
+        return ""
+    
+    def cmd_cp(self, args: List[str]) -> str:
+        """Copia archivo"""
+        if len(args) < 2:
+            return "uso: cp [origen] [destino]"
+        return ""
+    
+    def cmd_mv(self, args: List[str]) -> str:
+        """Mueve/renombra archivo"""
+        if len(args) < 2:
+            return "uso: mv [origen] [destino]"
+        return ""
+    
+    def cmd_grep(self, args: List[str]) -> str:
+        """Busca patrón en archivos"""
+        if not args:
+            return "uso: grep [patrón] [archivo]"
+        return f"Resultados de búsqueda para '{args[0]}':\nLínea 1: resultados coincidentes\nLínea 2: más resultados"
+    
+    def cmd_find(self, args: List[str]) -> str:
+        """Busca archivos"""
+        if not args:
+            path = '.'
+        else:
+            path = args[0]
+        
+        output = f"\nBuscando en {path}:\n"
+        output += f"{path}/bin/ls\n"
+        output += f"{path}/bin/cat\n"
+        output += f"{path}/etc/passwd\n"
+        output += f"{path}/etc/hosts\n"
+        output += f"{path}/home/kali/file.txt\n"
+        return output
+    
+    def cmd_locate(self, args: List[str]) -> str:
+        """Ubica archivos"""
+        if not args:
+            return "uso: locate [archivo]"
+        return f"/usr/bin/{args[0]}\n/usr/local/bin/{args[0]}\n/opt/{args[0]}"
+    
+    def cmd_which(self, args: List[str]) -> str:
+        """Encuentra ubicación de comando"""
+        if not args:
+            return "uso: which [comando]"
+        return f"/usr/bin/{args[0]}"
+    
+    def cmd_whereis(self, args: List[str]) -> str:
+        """Ubica binario, código fuente y manual"""
+        if not args:
+            return "uso: whereis [comando]"
+        return f"{args[0]}: /usr/bin/{args[0]} /usr/share/man/man1/{args[0]}.1.gz"
+    
+    def cmd_nano(self, args: List[str]) -> str:
+        """Editor de texto nano"""
+        return "Abriendo nano editor..."
+    
+    def cmd_vi(self, args: List[str]) -> str:
+        """Editor de texto vi"""
+        return "Abriendo vi editor..."
+    
+    def cmd_vim(self, args: List[str]) -> str:
+        """Editor de texto vim"""
+        return "Abriendo vim editor..."
+    
+    def cmd_chmod(self, args: List[str]) -> str:
+        """Cambia permisos de archivo"""
+        if len(args) < 2:
+            return "uso: chmod [permisos] [archivo]"
+        return f"Permisos de '{args[1]}' cambiados a {args[0]}"
+    
+    def cmd_chown(self, args: List[str]) -> str:
+        """Cambia propietario de archivo"""
+        if len(args) < 2:
+            return "uso: chown [usuario:grupo] [archivo]"
+        return f"Propietario de '{args[1]}' cambiado a {args[0]}"
+    
+    def cmd_setuid(self, args: List[str]) -> str:
+        """Establece bit SETUID"""
+        if not args:
+            return "uso: setuid [archivo]"
+        return f"Bit SETUID establecido en {args[0]}"
+    
+    # ==================== COMANDOS DE SSH ====================
+    
+    def cmd_ssh(self, args: List[str]) -> str:
+        """Cliente SSH"""
+        if not args:
+            return "uso: ssh [usuario@host]"
+        return f"Conectando a {args[0]}...\nConexión establecida"
+    
+    def cmd_ssh_keygen(self, args: List[str]) -> str:
+        """Genera claves SSH"""
+        output = "\nGenerando par de claves RSA de 4096 bits...\n"
+        output += "Generating public/private rsa key pair.\n"
+        output += f"Enter file in which to save the key (/root/.ssh/id_rsa): \n"
+        output += f"Enter passphrase (empty for no passphrase): \n"
+        output += f"Enter same passphrase again: \n"
+        output += f"Your identification has been saved in /root/.ssh/id_rsa.\n"
+        output += f"Your public key has been saved in /root/.ssh/id_rsa.pub.\n"
+        output += f"The key fingerprint is:\n"
+        output += f"SHA256:abcd1234efgh5678ijkl9012mnop3456qrst /root/.ssh/id_rsa\n"
+        return output
+    
+    def cmd_ssh_keyscan(self, args: List[str]) -> str:
+        """Escanea claves SSH de host"""
+        if not args:
+            return "uso: ssh-keyscan [host]"
+        return f"# {args[0]} SSH-2.0-OpenSSH_8.6\n{args[0]} ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC...\n"
+    
+    # ==================== COMANDOS DE HERRAMIENTAS DE SEGURIDAD ====================
+    
+    def cmd_nmap(self, args: List[str]) -> str:
+        """Escaneo de puertos con nmap"""
+        if not args:
+            return "uso: nmap [opciones] [host/red]"
+        
+        host = args[-1] if args else "127.0.0.1"
+        output = f"\nStarting Nmap 7.93 ( https://nmap.org ) at {self.cmd_date([])}\n"
+        output += f"Nmap scan report for {host} ({self._simulate_ip()})\n"
+        output += "Host is up (0.00042s latency).\n"
+        output += "Not shown: 993 filtered ports\n"
+        output += "PORT    STATE SERVICE\n"
+        
+        ports = [22, 25, 53, 80, 110, 143, 443, 445, 3306, 5432, 8080, 8888]
+        for port in ports[:random.randint(3, 8)]:
+            services = {
+                22: "ssh",
+                25: "smtp",
+                53: "domain",
+                80: "http",
+                110: "pop3",
+                143: "imap",
+                443: "https",
+                445: "microsoft-ds",
+                3306: "mysql",
+                5432: "postgres",
+                8080: "http-proxy",
+                8888: "sun-answerbook"
+            }
+            output += f"{port}/tcp  open  {services.get(port, 'unknown')}\n"
+        
+        output += f"\nNmap done at {self.cmd_date([])}, 1 IP address (1 host up) scanned in {random.randint(1, 30)}.{random.randint(0, 99)} seconds\n"
+        return output
+    
+    def cmd_nmap_scan(self, args: List[str]) -> str:
+        """Alias avanzado de nmap"""
+        return self.cmd_nmap(args)
+    
+    def cmd_netcat(self, args: List[str]) -> str:
+        """Herramienta netcat/nc"""
+        if not args:
+            return "uso: nc [opciones] [host] [puerto]"
+        return f"Conectando a {args[-2] if len(args) >= 2 else 'host'}:{args[-1] if args else 'puerto'}..."
+    
+    def cmd_curl(self, args: List[str]) -> str:
+        """Herramienta curl para descargas"""
+        if not args:
+            return "uso: curl [URL]"
+        url = args[0]
+        output = f"  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n"
+        output += f"                                 Dload  Upload   Total   Spent    Left  Speed\n"
+        output += f"100  1234k  100  1234k    0     0   5000k      0 --:--:-- --:--:-- --:--:--  246k\n"
+        return output
+    
+    def cmd_wget(self, args: List[str]) -> str:
+        """Herramienta wget para descargas"""
+        if not args:
+            return "uso: wget [URL]"
+        output = f"--{self.cmd_date([])}--  {args[0]}\n"
+        output += f"Resolviendo {args[0]}... {self._simulate_ip()}\n"
+        output += f"Conectando a {args[0]}:{self._simulate_ip()}:80... conectado.\n"
+        output += f"Petición HTTP enviada, esperando respuesta... 200 OK\n"
+        output += f"Longitud: 12345 (12K)\n"
+        output += f"Guardando en: 'index.html'\n"
+        return output
+    
+    def cmd_metasploit(self, args: List[str]) -> str:
+        """Framework Metasploit"""
+        return "Iniciando Metasploit Framework...\nmsf> "
+    
+    def cmd_msfconsole(self, args: List[str]) -> str:
+        """Consola de Metasploit"""
+        output = f"""
+       =c=#=|===============-  D E F I N I T I O N S  -===============|=#=c=
+                   Exploits  :  {random.randint(1500, 2500)}
+                   Payloads  :  {random.randint(400, 600)}
+                   Encoders  :  {random.randint(30, 50)}
+                   Nops      :  {random.randint(20, 40)}
+                   Post      :  {random.randint(300, 500)}
+
+       =c=#=|=____________  P A Y L O A D   T A B L E S  ===============|=#=c=
+           Staged  :  {random.randint(300, 400)}
+           Stagers :  {random.randint(100, 150)}
+           Stages  :  {random.randint(200, 300)}
+           Handlers:  {random.randint(40, 60)}
+
+       =c=#=|=____________  E N C O D E R   T A B L E  ===============|=#=c=
+           ranked :  {random.randint(25, 35)}
+
+       =c=#=|=________________  A U X I L I A R Y  ________________|=#=c=
+           Analysis :  {random.randint(20, 40)}
+           Admin    :  {random.randint(30, 50)}
+           Crawler  :  {random.randint(10, 20)}
+           Dos      :  {random.randint(30, 50)}
+           Fuzzer   :  {random.randint(50, 100)}
+           Scanner  :  {random.randint(80, 120)}
+           Sniffer  :  {random.randint(20, 40)}
+           Spoof    :  {random.randint(10, 20)}
+           Gather   :  {random.randint(100, 200)}
+           Recon    :  {random.randint(50, 100)}
+
+msf > """
+        return output
+    
+    def cmd_msfvenom(self, args: List[str]) -> str:
+        """Generador de payloads de Metasploit"""
+        if not args:
+            return "uso: msfvenom -p [payload] -e [encoder] -f [formato]"
+        
+        output = "[-] No platform was selected, choosing Msf::Module::Platform::Windows from the payload\n"
+        output += "[-] No arch selected, selecting arch: x86 from the payload\n"
+        output += "[-] No format specified, outputting bash for payload\n"
+        output += "[-] Attempting to read payload from stdin\n"
+        output += f"[*] Payload {args[-1] if args else 'payload'} encoded successfully\n"
+        output += f"Generated payload:\n"
+        output += "\\xfc\\xe8\\x89\\x00\\x00\\x00\\x60\\x89\\xe5\\x31\\xd2\\x64\\x8b\\x52\\x30\\\n"
+        output += "\\x8b\\x52\\x0c\\x8b\\x52\\x14\\x8b\\x72\\x28\\x0f\\xb7\\x4a\\x26\\x31\\xff\\\n"
+        return output
+    
+    def cmd_sqlmap(self, args: List[str]) -> str:
+        """Herramienta de inyección SQL"""
+        if not args:
+            return "uso: sqlmap -u [URL] [opciones]"
+        
+        output = f"\n{datetime.now().strftime('%H:%M:%S')} [*] Iniciando sqlmap...\n"
+        output += f"{datetime.now().strftime('%H:%M:%S')} [!] Objetivo URL: {args[-1] if args else 'URL'}\n"
+        output += f"{datetime.now().strftime('%H:%M:%S')} [*] Analizando parámetros de entrada...\n"
+        output += f"{datetime.now().strftime('%H:%M:%S')} [+] Parámetro vulnerable encontrado: 'id'\n"
+        output += f"{datetime.now().strftime('%H:%M:%S')} [+] SGBD: MySQL 5.7.30\n"
+        output += f"{datetime.now().strftime('%H:%M:%S')} [+] Base de datos actual: webapp_db\n"
+        output += f"{datetime.now().strftime('%H:%M:%S')} [*] Enumerando bases de datos...\n"
+        output += f"Base de datos        : 'information_schema'\n"
+        output += f"Base de datos        : 'mysql'\n"
+        output += f"Base de datos        : 'webapp_db'\n"
+        return output
+    
+    def cmd_hydra(self, args: List[str]) -> str:
+        """Herramienta de fuerza bruta"""
+        if not args:
+            return "uso: hydra -l [usuario] -P [lista] [servicio] [host]"
+        
+        output = f"\nHydra v9.4 (c) 2021 by van Hauser/THC & David Maciejak\n"
+        output += f"[WARNING] Attempt to connect to port 22/tcp failed (Connection refused)\n"
+        output += f"[DATA] max 16 tasks per 1 server, overall {random.randint(30, 100)} tasks, {random.randint(10, 50)} login tries\n"
+        output += f"[STATUS] {random.randint(0, 50)}.00 tries/sec, {random.randint(0, 100)} tries in {random.randint(1, 5)}.06s\n"
+        output += f"[22][ssh] host: 192.168.1.100 login: root password: toor\n"
+        output += f"[STATUS] attack finished for 192.168.1.100 (valid pair found)\n"
+        output += f"1 of 1 target successfully completed\n"
+        return output
+    
+    def cmd_hashcat(self, args: List[str]) -> str:
+        """Acelerador de cracking GPU"""
+        if not args:
+            return "uso: hashcat -a [ataque] -m [tipo_hash] [archivo_hashes] [wordlist]"
+        
+        output = f"\nhashcat (v6.2.6) starting\n"
+        output += f"* Device #1: CPU, {random.randint(4, 16)} compute cores, 8192/8192 MB allocatable memory\n"
+        output += f"Hash type           : MD5\n"
+        output += f"Hash target file    : hashes.txt\n"
+        output += f"Words from dict    : {random.randint(1000, 1000000)}\n"
+        output += f"Started             : {self.cmd_date([])}\n"
+        output += f"Progress            : {random.randint(1, 100)}% ({random.randint(0, 1000)}/{random.randint(1000, 1000000)})\n"
+        output += f"Cracked             : {random.randint(0, 50)} hashes\n"
+        return output
+    
+    def cmd_john(self, args: List[str]) -> str:
+        """John the Ripper - Cracking de contraseñas"""
+        if not args:
+            return "uso: john [archivo_hashes] [opciones]"
+        
+        output = f"\nJohn the Ripper [{random.randint(1, 3)}] 1.9.0 (c) 1996-2023\n"
+        output += f"Loaded 5 password hashes with 5 different salts (sha512crypt, crypt(3) $6$ [SHA512 {random.randint(1000, 10000)} iterations])\n"
+        output += f"Press 'q' to abort, almost any other key for status\n"
+        output += f"Pass:root           (root)\n"
+        output += f"Pass:test123        (admin)\n"
+        output += f"Pass:password       (user)\n"
+        output += f"3 password hashes cracked\n"
+        return output
+    
+    def cmd_aircrack_ng(self, args: List[str]) -> str:
+        """Suite de cracking WiFi"""
+        if not args:
+            return "uso: aircrack-ng [archivo_captura] [opciones]"
+        
+        output = f"\nAircrack-ng 1.7\n\n"
+        output += f"[00:00:00] 0/9822 keys tested (0.00 k/s)\n\n"
+        output += f"                       KEY FOUND! [ D0:3F:F0:0D:67:F0:0F:2F:5F:C2:73:32:32:32:32:32 ]\n\n"
+        output += f"Master Key            : D3 CF 0D 67 F0 0F 2F 5F C2 73 32 32 32 32 32 32\n"
+        output += f"                        4C 2B 5C 7A 8F 1E 3D 4E 5F 6G 7H 8I 9J 0K 1L 2M\n"
+        output += f"                        3N 4O 5P 6Q 7R 8S 9T 0U 1V 2W 3X 4Y 5Z 6A 7B 8C\n"
+        output += f"Transient Key         : F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF 00\n"
+        output += f"                        01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10\n\n"
+        output += f"EAPOL HMAC            : 12 34 56 78 9A BC DE F0 12 34 56 78 9A BC DE F0\n"
+        return output
+    
+    def cmd_airodump_ng(self, args: List[str]) -> str:
+        """Monitor de redes WiFi"""
+        output = f"\n BSSID              PWR  Beacons    #Data, #/s  CH   MB   ENC CIPHER  AUTH\n"
+        output += f" AA:BB:CC:DD:EE:FF  -25       100      500    2  11  54   WPA2 CCMP   PSK\n"
+        output += f" 11:22:33:44:55:66  -42        50      250    1   6  54   WPA2 CCMP   PSK\n"
+        output += f" FF:EE:DD:CC:BB:AA  -55        30      100    0   1  54   WPA  TKIP   PSK\n\n"
+        output += f" BSSID              STATION            PWR   Rate    Lost    Frames  Probes\n"
+        output += f" AA:BB:CC:DD:EE:FF  AA:BB:CC:DD:EE:01  -30   54 Mbps   0       1234\n"
+        output += f" AA:BB:CC:DD:EE:FF  AA:BB:CC:DD:EE:02  -45   24 Mbps   5        567    Google\n"
+        return output
+    
+    def cmd_aireplay_ng(self, args: List[str]) -> str:
+        """Inyector de paquetes WiFi"""
+        output = f"\naireplay-ng 1.7 - (C) 2007-2021\n"
+        output += f"Open Source Project / http://www.aircrack-ng.org\n\n"
+        output += f"No replay interface specified\n\n"
+        output += f"Usage: aireplay-ng <options> <replay interface>\n"
+        return output
+    
+    def cmd_airmon_ng(self, args: List[str]) -> str:
+        """Monitor mode para WiFi"""
+        output = f"\nInterface       Chipset         Driver\n"
+        output += f"wlan0           Broadcom        wl\n"
+        output += f"wlan1           Intel           iwlwifi\n"
+        output += f"wlan2           Ralink          rt2800usb\n"
+        return output
+    
+    def cmd_wireshark(self, args: List[str]) -> str:
+        """Analizador de protocolos"""
+        return "Abriendo Wireshark GUI..."
+    
+    def cmd_tcpdump(self, args: List[str]) -> str:
+        """Capturador de paquetes"""
+        if not args:
+            return "usage: tcpdump [-options] [expression]"
+        
+        output = f"\ntcpdump: verbose output suppressed\n"
+        output += f"tcpdump: Listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes\n"
+        output += f"12:34:56.789123 IP 192.168.1.100.ssh > 192.168.1.50.54321: Flags [.], ack 1234, win 65535\n"
+        output += f"12:34:57.790124 IP 192.168.1.50.54321 > 192.168.1.100.ssh: Flags [P.], seq 1234:5678\n"
+        output += f"12:34:58.791125 IP 192.168.1.100.53 > 8.8.8.8.53: 1234+ A? google.com. (28)\n"
+        output += f"12:34:59.792126 IP 8.8.8.8.53 > 192.168.1.100.53: 1234 2/0/0 A 172.217.14.206\n"
+        return output
+    
+    def cmd_burpsuite(self, args: List[str]) -> str:
+        """Suite de pruebas web"""
+        return "Iniciando Burp Suite Community Edition...\nCargando interfaz gráfica..."
+    
+    def cmd_nikto(self, args: List[str]) -> str:
+        """Scanner de vulnerabilidades web"""
+        if not args:
+            return "uso: nikto -h [host] [opciones]"
+        
+        output = f"\n- Nikto v2.5.0\n"
+        output += f"+ Target IP: {self._simulate_ip()}\n"
+        output += f"+ Target Hostname: {args[-1] if args else 'host'}\n"
+        output += f"+ Target Port: 80\n"
+        output += f"+ Start Time: {self.cmd_date([])}\n"
+        output += f"- Nikto v2.5.0\n"
+        output += f"+ No CGI Directories found (use '-C all' to force check all possible dirs)\n"
+        output += f"+ Apache/2.4.41 appears to be outdated (current is at least Apache/2.4.54)\n"
+        output += f"+ /index.php: The anti-clickjacking X-Frame-Options header is missing\n"
+        output += f"+ /index.php: The X-Content-Type-Options header is missing\n"
+        output += f"+ /admin/: Admin panel found\n"
+        output += f"+ 1 host(s) tested\n"
+        return output
+    
+    def cmd_gobuster(self, args: List[str]) -> str:
+        """Enumerador de directorios"""
+        if not args:
+            return "uso: gobuster dir -u [URL] -w [wordlist]"
+        
+        output = f"\nGobuster v3.6\n"
+        output += f"by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)\n"
+        output += f"===============================================================\n"
+        output += f"[+] Url:                     {args[-1] if args else 'URL'}\n"
+        output += f"[+] Method:                  GET\n"
+        output += f"[+] Threads:                 10\n"
+        output += f"[+] Wordlist:                common.txt\n"
+        output += f"[+] Status codes:            200,204,301,302,307,401,403\n"
+        output += f"[+] User Agent:              gobuster/3.6\n"
+        output += f"[+] Timeout:                 10s\n"
+        output += f"===============================================================\n"
+        output += f"{datetime.now().strftime('%H:%M:%S')} Starting gobuster in directory enumeration mode\n"
+        output += f"===============================================================\n"
+        output += f"/admin                (Status: 200)\n"
+        output += f"/api                  (Status: 200)\n"
+        output += f"/assets               (Status: 200)\n"
+        output += f"/backup               (Status: 301)\n"
+        output += f"/config               (Status: 403)\n"
+        output += f"/index.php            (Status: 200)\n"
+        output += f"/login                (Status: 200)\n"
+        output += f"/old                  (Status: 301)\n"
+        output += f"/upload               (Status: 200)\n"
+        output += f"===============================================================\n"
+        return output
+    
+    def cmd_wpscan(self, args: List[str]) -> str:
+        """Scanner de WordPress"""
+        if not args:
+            return "uso: wpscan --url [URL] [opciones]"
+        
+        output = f"\n_______________________________________________________________\n"
+        output += f"         __          _______   _____\n"
+        output += f"         \\ \\        / /  __ \\ / ____|\n"
+        output += f"          \\ \\  /\\  / /| |  | | (___\n"
+        output += f"           \\ \\/  \\/ / | |  | |\\___ \\\n"
+        output += f"            \\  /\\  /  | |__| |____) |\n"
+        output += f"             \\/  \\/   |_____/|_____/\n\n"
+        output += f"         WordPress Security Scanner by the WPScan Team\n"
+        output += f"                     Version {random.randint(1, 4)}.{random.randint(0, 9)}.{random.randint(0, 99)}\n"
+        output += f"_______________________________________________________________\n\n"
+        output += f"[+] Scanning {args[-1] if args else 'URL'}\n"
+        output += f"[+] WordPress version {random.randint(4, 6)}.{random.randint(0, 9)}\n"
+        output += f"[!] Vulnerable plugins detected\n"
+        output += f"[!] Vulnerable themes detected\n"
+        output += f"[+] Users found: admin, user1, user2\n"
+        return output
+    
+    def cmd_lynis(self, args: List[str]) -> str:
+        """Auditoría de seguridad del sistema"""
+        output = f"\n================================================================================\n"
+        output += f"  Lynis 3.{random.randint(0, 9)}.{random.randint(0, 9)} - Linux Auditing Tool\n"
+        output += f"================================================================================\n"
+        output += f"[+] Boot loader audit\n"
+        output += f"[+] Filesystems audit\n"
+        output += f"[+] Secure boot verification\n"
+        output += f"[+] Hard disk verification\n"
+        output += f"[+] USB devices scan\n"
+        output += f"[+] Kernel audit\n"
+        output += f"[+] System controls audit\n"
+        output += f"[+] Core dump configuration\n"
+        output += f"[+] Memory management audit\n"
+        output += f"[+] Process accounting audit\n"
+        output += f"[+] Auditing frameworks audit\n"
+        output += f"[+] Boot loader audit\n"
+        output += f"[+] Grub bootloader protection\n"
+        output += f"[+] Filesystem integrity checking audit\n"
+        output += f"[+] SELinux status check\n"
+        output += f"[+] Execution of SELinux status tool\n"
+        output += f"[+] Apache, Nginx and other web servers audit\n"
+        output += f"[!] Issue: SSH remote root login enabled\n"
+        output += f"[!] Issue: SSH password authentication enabled\n"
+        output += f"[!] Issue: Weak SSL/TLS configuration\n"
+        output += f"[+] Score: {random.randint(40, 90)}/100\n"
+        return output
+    
+    def cmd_chkrootkit(self, args: List[str]) -> str:
+        """Detector de rootkits"""
+        output = f"\nCHKROOTKIT version {random.randint(0, 2)}.{random.randint(0, 9)}.{random.randint(0, 9)} (c) 1997-2023\n"
+        output += f"Local checks\n"
+        output += f"HOSTNAME = kali-linux\n"
+        output += f"STAT = /bin/stat\n"
+        output += f"Searching for suspicious files and dirs, it may take a while... OK\n"
+        output += f"Searching for rootkits... OK\n"
+        output += f"Searching for T/TCP... OK\n"
+        output += f"Searching for infected files... OK\n"
+        output += f"Searching for rootkit files and dirs (this may take a while)... OK\n"
+        return output
+    
+    def cmd_rkhunter(self, args: List[str]) -> str:
+        """Rootkit Hunter"""
+        output = f"\nrkhunter {random.randint(1, 2)}.{random.randint(0, 9)}.{random.randint(0, 9)}\n"
+        output += f"Checking system configuration...\n"
+        output += f"Checking system binaries...\n"
+        output += f"Checking kernel configuration...\n"
+        output += f"Checking kernel modules...\n"
+        output += f"Checking shared objects...\n"
+        output += f"Checking for promiscuous interfaces...\n"
+        output += f"Checking for rootkits...\n"
+        output += f"Scan complete\n"
+        output += f"Warnings: {random.randint(0, 5)}\n"
+        output += f"Alerts: 0\n"
+        return output
+    
+    def cmd_clamav(self, args: List[str]) -> str:
+        """Antivirus ClamAV"""
+        if not args:
+            return "uso: clamscan [opciones] [archivo/directorio]"
+        
+        output = f"\nClamAV {random.randint(0, 2)}.{random.randint(0, 9)}.{random.randint(0, 9)}\n"
+        output += f"Scanning {args[-1] if args else 'archivo'}\n"
+        output += f"Files scanned: {random.randint(100, 10000)}\n"
+        output += f"Infected files: {random.randint(0, 10)}\n"
+        output += f"Scan time: {random.randint(1, 60)} seconds\n"
+        return output
+    
+    def cmd_openssl(self, args: List[str]) -> str:
+        """Herramienta OpenSSL"""
+        if not args:
+            return "uso: openssl [comando] [opciones]"
+        
+        if 'version' in ' '.join(args):
+            return "OpenSSL 3.0.8 30 May 2023"
+        elif 'req' in ' '.join(args):
+            return "Generating RSA private key, 2048 bit long modulus...\nCertificate request self-signed successfully\n"
+        else:
+            return "OpenSSL> "
+    
+    def cmd_ssl_test(self, args: List[str]) -> str:
+        """Test de seguridad SSL/TLS"""
+        if not args:
+            return "uso: ssl-test [host] [puerto]"
+        
+        output = f"\nSSL/TLS Configuration Test\n"
+        output += f"Target: {args[0]}\n"
+        output += f"Port: {args[1] if len(args) > 1 else '443'}\n\n"
+        output += f"[+] SSL Version: TLSv1.3\n"
+        output += f"[+] Certificate: Valid\n"
+        output += f"[+] Cipher Strength: Strong\n"
+        output += f"[+] Certificate Pinning: Not implemented\n"
+        output += f"[!] Heartbleed: Not vulnerable\n"
+        output += f"[!] CRIME: Not vulnerable\n"
+        output += f"[!] POODLE: Not vulnerable\n"
+        return output
+    
+    def cmd_exploit_db(self, args: List[str]) -> str:
+        """Búsqueda en Exploit Database"""
+        if not args:
+            return "uso: exploit-db [búsqueda]"
+        
+        output = f"\nExploit-DB Search Results for '{' '.join(args)}'\n"
+        output += f"{'ID':<10} {'Title':<50} {'Type':<10}\n"
+        output += f"{'─'*70}\n"
+        output += f"{'50123':<10} {'Arbitrary Code Execution':<50} {'RCE':<10}\n"
+        output += f"{'50124':<10} {'SQL Injection':<50} {'SQLi':<10}\n"
+        output += f"{'50125':<10} {'Cross-Site Scripting':<50} {'XSS':<10}\n"
+        return output
+    
+    def cmd_cve_search(self, args: List[str]) -> str:
+        """Búsqueda CVE"""
+        if not args:
+            return "uso: cve-search [CVE-ID/producto]"
+        
+        output = f"\nCVE Search Results:\n"
+        output += f"CVE-{datetime.now().year}-{random.randint(10000, 99999)}\n"
+        output += f"Description: {' '.join(args)}\n"
+        output += f"Severity: High\n"
+        output += f"CVSS Score: {round(random.uniform(7.0, 10.0), 1)}\n"
+        return output
+    
+    def cmd_searchsploit(self, args: List[str]) -> str:
+        """Buscar en Exploit-DB local"""
+        if not args:
+            return "uso: searchsploit [búsqueda]"
+        
+        output = f"\nSearchsploit Results:\n"
+        output += f"  Exploit Title                          Path\n"
+        output += f"─ ────────────────────────────────────── ────────────────────────────\n"
+        output += f"  {' '.join(args) + ' RCE':<40} /usr/share/exploitdb/exploits/...\n"
+        output += f"  {' '.join(args) + ' XSS':<40} /usr/share/exploitdb/exploits/...\n"
+        output += f"  {' '.join(args) + ' SQLi':<40} /usr/share/exploitdb/exploits/...\n"
+        return output
+    
+    # ==================== COMANDOS PERSONALIZADOS ====================
+    
+    def cmd_tools(self, args: List[str]) -> str:
+        """Lista todas las herramientas disponibles"""
+        output = f"\n╔{'═' * 78}╗\n"
+        output += f"║ {'HERRAMIENTAS DE SEGURIDAD DISPONIBLES EN KALI LINUX':<76} ║\n"
+        output += f"╚{'═' * 78}╝\n\n"
+        
+        for tool, info in self.vm.tools_database.items():
+            output += f"[+] {tool.upper()}\n"
+            output += f"    Descripción: {info['description']}\n"
+            output += f"    Versión: {info['version']}\n"
+            output += f"    Uso: {info['uses']}\n\n"
+        
+        return output
+    
+    def cmd_exploit(self, args: List[str]) -> str:
+        """Ejecuta un exploit de prueba"""
+        if not args:
+            return "uso: exploit [nombre_exploit]"
+        
+        output = f"\n[*] Inicializando exploit: {args[0]}\n"
+        output += f"[*] Cargando payload...\n"
+        output += f"[*] Configurando opciones...\n"
+        output += f"[*] Ejecutando exploit...\n"
+        output += f"[+] ¡Conexión inversa establecida!\n"
+        output += f"[+] Sesión shell abierta\n"
+        output += f"shell> whoami\n"
+        output += f"root\n"
+        output += f"shell> exit\n"
+        return output
+    
+    def cmd_payload(self, args: List[str]) -> str:
+        """Genera un payload"""
+        if not args:
+            return "uso: payload [tipo] [LHOST] [LPORT]"
+        
+        output = f"\n[*] Generando payload: {args[0]}\n"
+        output += f"[*] Tamaño: {random.randint(500, 5000)} bytes\n"
+        output += f"[*] Tipo: {random.choice(['x86', 'x64', 'ARM'])}\n"
+        output += f"[+] Payload generado exitosamente\n"
+        output += f"[*] Formato: raw | c | python | perl | bash | powershell\n"
+        return output
+    
+    def cmd_scan(self, args: List[str]) -> str:
+        """Realiza un escaneo de seguridad"""
+        if not args:
+            return "uso: scan [tipo: full|quick|ports|services|vuln]"
+        
+        scan_type = args[0].lower() if args else "full"
+        output = f"\n[*] Iniciando escaneo de tipo: {scan_type}\n"
+        output += f"[*] Fecha: {self.cmd_date([])}\n"
+        
+        if scan_type in ['full', 'ports']:
+            output += f"[+] Escaneando puertos...\n"
+            output += f"    21/tcp   abierto   ftp\n"
+            output += f"    22/tcp   abierto   ssh\n"
+            output += f"    80/tcp   abierto   http\n"
+            output += f"    443/tcp  abierto   https\n"
+            output += f"    3306/tcp abierto   mysql\n"
+        
+        if scan_type in ['full', 'services']:
+            output += f"[+] Detectando servicios...\n"
+            output += f"    FTP: vsftpd 2.3.4\n"
+            output += f"    SSH: OpenSSH 7.4\n"
+            output += f"    HTTP: Apache 2.4.6\n"
+            output += f"    MySQL: 5.7.20\n"
+        
+        if scan_type in ['full', 'vuln']:
+            output += f"[+] Escaneando vulnerabilidades...\n"
+            output += f"    [!] CVE-2019-12345 - Remote Code Execution\n"
+            output += f"    [!] CVE-2020-67890 - SQL Injection\n"
+            output += f"    [!] CVE-2021-54321 - Cross-Site Scripting\n"
+        
+        output += f"[*] Escaneo completado en {random.randint(1, 60)} segundos\n"
+        return output
+    
+    def cmd_enum(self, args: List[str]) -> str:
+        """Enumeración de sistemas"""
+        if not args:
+            return "uso: enum [host]"
+        
+        output = f"\n[*] Enumerando: {args[0]}\n"
+        output += f"[+] Información del Host:\n"
+        output += f"    OS: Linux (Kernel 5.x.x)\n"
+        output += f"    Hostname: target-system\n"
+        output += f"    Arquitectura: x86_64\n"
+        output += f"[+] Usuarios encontrados:\n"
+        output += f"    root\n"
+        output += f"    admin\n"
+        output += f"    user\n"
+        output += f"    guest\n"
+        output += f"[+] Grupos encontrados:\n"
+        output += f"    root\n"
+        output += f"    wheel\n"
+        output += f"    admin\n"
+        output += f"[+] Procesos en ejecución:\n"
+        output += f"    [1] init\n"
+        output += f"    [500] sshd\n"
+        output += f"    [600] apache2\n"
+        output += f"[+] Enumeración completada\n"
+        return output
+    
+    def cmd_crack(self, args: List[str]) -> str:
+        """Cracking de contraseñas/hashes"""
+        if not args:
+            return "uso: crack [archivo_hashes] [tipo: md5|sha1|sha256]"
+        
+        output = f"\n[*] Iniciando cracking de: {args[0]}\n"
+        output += f"[*] Tipo de hash: {args[1] if len(args) > 1 else 'auto'}\n"
+        output += f"[*] Usando diccionario: rockyou.txt\n"
+        output += f"[+] Iniciando intentos...\n"
+        output += f"[+] Hash 1: admin123\n"
+        output += f"[+] Hash 2: password\n"
+        output += f"[+] Hash 3: letmein\n"
+        output += f"[+] {random.randint(3, 10)} hashes cracked\n"
+        return output
+    
+    def cmd_network_test(self, args: List[str]) -> str:
+        """Test de conectividad de red"""
+        output = f"\n[*] Realizando tests de conectividad de red\n"
+        output += f"[+] DNS: OK\n"
+        output += f"[+] Gateway: OK\n"
+        output += f"[+] Internet: OK\n"
+        output += f"[+] Latencia: {random.randint(1, 100)}ms\n"
+        output += f"[+] Velocidad Upload: {random.randint(1, 100)} Mbps\n"
+        output += f"[+] Velocidad Download: {random.randint(1, 100)} Mbps\n"
+        return output
+    
+    def cmd_vulnerability_scan(self, args: List[str]) -> str:
+        """Escaneo de vulnerabilidades avanzado"""
+        if not args:
+            return "uso: vulnerability-scan [target]"
+        
+        output = f"\n[*] Iniciando escaneo de vulnerabilidades\n"
+        output += f"[*] Target: {args[0]}\n"
+        output += f"[*] Profundidad: completa\n"
+        output += f"[+] Vulnerabilidades encontradas: {random.randint(5, 20)}\n"
+        output += f"    [!] CRITICAL: Remote Code Execution\n"
+        output += f"    [!] HIGH: SQL Injection\n"
+        output += f"    [!] HIGH: Cross-Site Scripting\n"
+        output += f"    [!] MEDIUM: Information Disclosure\n"
+        output += f"    [!] MEDIUM: Weak Authentication\n"
+        output += f"[+] Reporte guardado en: /root/reports/scan_report.html\n"
+        return output
+    
+    def cmd_wordlist(self, args: List[str]) -> str:
+        """Administrador de wordlists"""
+        output = f"\n[*] Wordlists disponibles:\n"
+        output += f"    rockyou.txt ({random.randint(1, 14)} MB)\n"
+        output += f"    common.txt ({random.randint(1, 5)} MB)\n"
+        output += f"    passwords.txt ({random.randint(1, 10)} MB)\n"
+        output += f"    users.txt (100 KB)\n"
+        output += f"[*] Total: {random.randint(1, 30)} GB de diccionarios\n"
+        return output
+    
+    def cmd_env(self, args: List[str]) -> str:
+        """Muestra variables de entorno"""
+        output = "\n"
+        for key, value in self.vm.environment_vars.items():
+            output += f"{key}={value}\n"
+        return output
+    
+    def cmd_export(self, args: List[str]) -> str:
+        """Exporta variable de entorno"""
+        if not args or '=' not in args[0]:
+            return "uso: export VAR=value"
+        
+        var_name, var_value = args[0].split('=', 1)
+        self.vm.environment_vars[var_name] = var_value
+        return ""
+    
+    def cmd_unset(self, args: List[str]) -> str:
+        """Desexporta variable de entorno"""
+        if not args:
+            return "uso: unset VAR"
+        
+        if args[0] in self.vm.environment_vars:
+            del self.vm.environment_vars[args[0]]
+        return ""
+    
+    def cmd_alias(self, args: List[str]) -> str:
+        """Crea alias de comando"""
+        if not args:
+            return "Aliases actuales: (ninguno configurado)"
+        return f"alias {args[0]} definido"
+    
+    def cmd_unalias(self, args: List[str]) -> str:
+        """Elimina alias"""
+        if not args:
+            return "uso: unalias nombre"
+        return f"alias {args[0]} eliminado"
+    
+    def cmd_source(self, args: List[str]) -> str:
+        """Ejecuta script de shell"""
+        if not args:
+            return "uso: source [archivo]"
+        return f"Ejecutando {args[0]}..."
+    
+    def cmd_sleep(self, args: List[str]) -> str:
+        """Pausa la ejecución"""
+        if not args:
+            return "uso: sleep [segundos]"
+        return ""
+    
+    def cmd_time(self, args: List[str]) -> str:
+        """Mide tiempo de ejecución"""
+        if not args:
+            return "usage: time command"
+        output = f"\nreal    0m{random.randint(0, 9)}.{random.randint(0, 9)}{random.randint(0, 9)}s\n"
+        output += f"user    0m{random.randint(0, 9)}.{random.randint(0, 9)}{random.randint(0, 9)}s\n"
+        output += f"sys     0m{random.randint(0, 9)}.{random.randint(0, 9)}{random.randint(0, 9)}s\n"
+        return output
+    
+    def cmd_timeout(self, args: List[str]) -> str:
+        """Ejecuta comando con timeout"""
+        if len(args) < 2:
+            return "usage: timeout [segundos] [comando]"
+        return f"Ejecutando {' '.join(args[1:])} con timeout de {args[0]} segundos..."
+    
+    def cmd_benchmark(self, args: List[str]) -> str:
+        """Benchmark del sistema"""
+        output = f"\n[*] Realizando benchmark del sistema\n"
+        output += f"[+] CPU Performance: {random.randint(3000, 5000)} Mbps\n"
+        output += f"[+] Memory Speed: {random.randint(10000, 50000)} Mbps\n"
+        output += f"[+] Disk Speed: {random.randint(100, 500)} Mbps\n"
+        output += f"[+] Score Total: {random.randint(5000, 15000)} puntos\n"
+        return output
+    
+    def cmd_man(self, args: List[str]) -> str:
+        """Manual de comando"""
+        if not args:
+            return "usage: man [comando]"
+        
+        output = f"\n{args[0].upper()}(1)                                                 {args[0].upper()}(1)\n\n"
+        output += f"NAME\n"
+        output += f"       {args[0]} - command description\n\n"
+        output += f"SYNOPSIS\n"
+        output += f"       {args[0]} [OPTION]... [FILE]...\n\n"
+        output += f"DESCRIPTION\n"
+        output += f"       This is a manual page for the {args[0]} command.\n\n"
+        output += f"OPTIONS\n"
+        output += f"       -h, --help\n"
+        output += f"              display this help and exit\n\n"
+        output += f"SEE ALSO\n"
+        output += f"       bash(1), sh(1), ksh(1), zsh(1)\n"
+        return output
+    
+    def cmd_info(self, args: List[str]) -> str:
+        """Información sobre tema"""
+        if not args:
+            return "usage: info [tema]"
+        return f"Información sobre {args[0]} - Presione 'q' para salir"
+    
+    def cmd_history(self, args: List[str]) -> str:
+        """Muestra historial de comandos"""
+        output = "\n"
+        for i, cmd in enumerate(self.vm.command_history[-20:], 1):
+            output += f"{i:3d}  {cmd}\n"
+        return output
+    
+    def cmd_systemctl(self, args: List[str]) -> str:
+        """Control de servicios del sistema"""
+        if not args:
+            return "usage: systemctl [status|start|stop|restart] [servicio]"
+        
+        if args[0] == 'status':
+            return f"● systemd-logind.service - User Login Management\n   Loaded: loaded (/lib/systemd/system/systemd-logind.service)\n   Active: active (running)"
+        return f"Servicio {' '.join(args)} ejecutado"
+    
+    def cmd_service(self, args: List[str]) -> str:
+        """Administrador de servicios legacy"""
+        if not args:
+            return "usage: service [nombre] [status|start|stop|restart]"
+        return f"Servicio {args[0]} {args[1] if len(args) > 1 else 'ejecutado'}"
+    
+    def cmd_apt(self, args: List[str]) -> str:
+        """Administrador de paquetes APT"""
+        if not args:
+            return "usage: apt [install|remove|update|upgrade] [paquete]"
+        return f"Paquete {' '.join(args)} procesado"
+    
+    def cmd_apt_get(self, args: List[str]) -> str:
+        """APT-GET - Administrador de paquetes"""
+        return self.cmd_apt(args)
+    
+    def _ip_to_cidr(self, netmask: str) -> str:
+        """Convierte netmask a CIDR"""
+        parts = netmask.split('.')
+        total_bits = sum(bin(int(part)).count('1') for part in parts)
+        return str(total_bits)
+    
+    def _simulate_ip(self) -> str:
+        """Simula una dirección IP"""
+        return f"{random.randint(1, 254)}.{random.randint(0, 254)}.{random.randint(1, 254)}.{random.randint(1, 254)}"
+
+
+class KaliLinuxShell:
+    """Interfaz principal de shell para la máquina virtual Kali Linux"""
+    
+    def __init__(self):
+        self.vm = KaliLinuxVM()
+        self.interpreter = CommandInterpreter(self.vm)
+        self.banner = self._create_banner()
+    
+    def _create_banner(self) -> str:
+        """Crea el banner de bienvenida"""
+        banner = f"""
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║   ██╗  ██╗ █████╗ ██╗     ██╗          ██╗     ██╗███╗   ██╗██╗   ██╗██╗  ██╗ ║
+║   ██║ ██╔╝██╔══██╗██║     ██║          ██║     ██║████╗  ██║██║   ██║╚██╗██╔╝ ║
+║   █████╔╝ ███████║██║     ██║          ██║     ██║██╔██╗ ██║██║   ██║ ╚███╔╝  ║
+║   ██╔═██╗ ██╔══██║██║     ██║          ██║     ██║██║╚██╗██║██║   ██║ ██╔██╗  ║
+║   ██║  ██╗██║  ██║███████╗███████╗     ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗ ║
+║   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝     ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝ ║
+║                                                                                ║
+║        🔐 KALI LINUX VIRTUAL MACHINE SIMULATOR v3.0 🔐                       ║
+║                                                                                ║
+║        Welcome to the Penetration Testing & Security Platform                 ║
+║        Powered by Security Research Team | 2026                              ║
+║                                                                                ║
+║        Type 'help' for available commands                                     ║
+║        Type 'tools' to see all security tools                                 ║
+║        Type 'exit' to quit                                                    ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+"""
+        return banner
+    
+    def run(self):
+        """Inicia el shell interactivo"""
+        print(self.banner)
+        
+        while self.vm.running:
+            try:
+                # Mostrar prompt
+                prompt = f"\033[1;32m{self.vm.current_user}@kali-linux:\033[1;34m{self.vm.filesystem.current_dir}\033[0m$ "
+                
+                # Obtener entrada del usuario
+                command_input = input(prompt).strip()
+                
+                if not command_input:
+                    continue
+                
+                # Ejecutar comando
+                output = self.interpreter.execute_command(command_input)
+                
+                # Mostrar resultado
+                if output:
+                    print(output)
+                
+            except KeyboardInterrupt:
+                print("\n\n[!] Conexión interrumpida por el usuario")
+                self.vm.running = False
+            except Exception as e:
+                print(f"Error: {str(e)}")
+        
+        print("\n[*] Sesión finalizada. ¡Hasta luego!")
+
+
+def main():
+    """Función principal"""
+    try:
+        shell = KaliLinuxShell()
+        shell.run()
+    except Exception as e:
+        print(f"Error fatal: {str(e)}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
